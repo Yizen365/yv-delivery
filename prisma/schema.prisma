@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum ROLE {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String     @unique
+  emailVerified Boolean    @default(false)
+  password      String?
+  image         String?
+  token         String?    @unique
+  role          ROLE       @default(USER)
+  createdAt     DateTime   @default(now())
+  Favorite      Favorite[]
+}
+
+model Category {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  image     String
+  createdAt DateTime  @default(now())
+  Product   Product[]
+}
+
+model Product {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  price       Int
+  images      String[]
+  views       Int         @default(1)
+  categoryId  String?     @db.ObjectId
+  Category    Category?   @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime    @default(now())
+  OrderItem   OrderItem[]
+  Favorite    Favorite[]
+}
+
+model Order {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  isPaid      Boolean      @default(false)
+  AddressInfo AddressInfo?
+  createdAt   DateTime     @default(now())
+  OrderItem   OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  quantity  Int      @default(1)
+  productId String?  @db.ObjectId
+  Product   Product? @relation(fields: [productId], references: [id])
+  orderId   String?  @db.ObjectId
+  Order     Order?   @relation(fields: [orderId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model AddressInfo {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  address   String
+  city      String
+  state     String
+  country   String
+  pinCode   Int
+  phoneNo   Int
+  orderId   String?  @db.ObjectId
+  Order     Order?   @relation(fields: [orderId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([orderId])
+}
+
+model Favorite {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  User      User?    @relation(fields: [userId], references: [id])
+  productId String?  @db.ObjectId
+  Product   Product? @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+}
